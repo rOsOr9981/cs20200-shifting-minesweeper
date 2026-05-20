@@ -91,10 +91,27 @@ module Board =
             placed <- Set.add newPos placed
         { state with Mines = placed; Flags = Set.empty }
 
+    /// Guarantee that the very first reveal never lands on a mine.
+    /// If it would, relocate that mine to a random other non-mine cell.
+    let private ensureFirstSafe (state: GameState) (r: int, c: int) (rng: Random) =
+        if state.RevealCount > 0 || not (Set.contains (r, c) state.Mines) then
+            state
+        else
+            let candidates =
+                [| for nr in 0 .. SIZE - 1 do
+                       for nc in 0 .. SIZE - 1 do
+                           if (nr, nc) <> (r, c) && not (Set.contains (nr, nc) state.Mines) then
+                               yield (nr, nc) |]
+            if candidates.Length = 0 then state
+            else
+                let newPos = candidates.[rng.Next(candidates.Length)]
+                { state with Mines = state.Mines |> Set.remove (r, c) |> Set.add newPos }
+
     /// Attempt to reveal a cell. Returns Revealed, HitMine, or NoOp.
     /// When the resulting RevealCount is a multiple of 5, an earthquake fires
     /// and mines are shifted before returning.
     let handleReveal (state: GameState) (r: int, c: int) (rng: Random) =
+        let state = ensureFirstSafe state (r, c) rng
         if Set.contains (r, c) state.Revealed then NoOp
         elif Set.contains (r, c) state.Mines then HitMine
         else

@@ -4,6 +4,7 @@ open System
 open Avalonia
 open Avalonia.Controls
 open Avalonia.Controls.Primitives
+open Avalonia.Controls.Shapes
 open Avalonia.Input
 open Avalonia.Layout
 open Avalonia.Markup.Xaml
@@ -22,6 +23,7 @@ type MainWindow() as this =
 
     let cells : Border[,] = Array2D.zeroCreate SIZE SIZE
     let cellTexts : TextBlock[,] = Array2D.zeroCreate SIZE SIZE
+    let cellBombs : Control[,] = Array2D.zeroCreate SIZE SIZE
 
     // Classic Minesweeper colors for the adjacency numbers 1-8
     let numberBrush n =
@@ -33,15 +35,57 @@ type MainWindow() as this =
             | 4 -> Color.FromRgb(0x1Auy, 0x35uy, 0x66uy)  // dark blue
             | 5 -> Color.FromRgb(0x80uy, 0x0Cuy, 0x0Cuy)  // dark red
             | 6 -> Color.FromRgb(0x12uy, 0x99uy, 0xA8uy)  // teal
-            | 7 -> Color.FromRgb(0x33uy, 0x33uy, 0x33uy)  // black
-            | _ -> Color.FromRgb(0x66uy, 0x66uy, 0x66uy)  // gray
+            | 7 -> Color.FromRgb(0x33uy, 0x33uy, 0x33uy)  // near-black
+            | _ -> Color.FromRgb(0x66uy, 0x66uy, 0x66uy)  // gray (8)
         SolidColorBrush(c) :> IBrush
 
-    let hiddenBrush     = SolidColorBrush(Color.FromRgb(0x4Cuy, 0x4Cuy, 0x52uy)) :> IBrush
-    let hiddenHoverBrush= SolidColorBrush(Color.FromRgb(0x60uy, 0x60uy, 0x66uy)) :> IBrush
-    let revealedBrush   = SolidColorBrush(Color.FromRgb(0xECuy, 0xECuy, 0xECuy)) :> IBrush
-    let mineBrush       = SolidColorBrush(Color.FromRgb(0x99uy, 0x12uy, 0x12uy)) :> IBrush
-    let flagFg          = SolidColorBrush(Color.FromRgb(0xFFuy, 0x6Buy, 0x6Buy)) :> IBrush
+    let hiddenBrush      = SolidColorBrush(Color.FromRgb(0x4Cuy, 0x4Cuy, 0x52uy)) :> IBrush
+    let hiddenHoverBrush = SolidColorBrush(Color.FromRgb(0x60uy, 0x60uy, 0x66uy)) :> IBrush
+    let revealedBrush    = SolidColorBrush(Color.FromRgb(0xECuy, 0xECuy, 0xECuy)) :> IBrush
+    let mineBrush        = SolidColorBrush(Color.FromRgb(0xB3uy, 0x1Cuy, 0x1Cuy)) :> IBrush
+    let flagFg           = SolidColorBrush(Color.FromRgb(0xFFuy, 0x6Buy, 0x6Buy)) :> IBrush
+
+    // Build a small vector "bomb" glyph (black ball + highlight + yellow spark)
+    // using basic shapes so it renders identically on every platform without
+    // relying on an emoji font being installed.
+    let createBombGlyph () : Control =
+        let grid =
+            Grid(
+                Width = 30.0,
+                Height = 30.0,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center)
+
+        let body =
+            Ellipse(
+                Width = 22.0,
+                Height = 22.0,
+                Fill = SolidColorBrush(Color.FromRgb(0x1Auy, 0x1Auy, 0x1Auy)),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center)
+        grid.Children.Add(body) |> ignore
+
+        let highlight =
+            Ellipse(
+                Width = 5.0,
+                Height = 5.0,
+                Fill = SolidColorBrush(Color.FromArgb(200uy, 255uy, 255uy, 255uy)),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = Thickness(7.0, 6.0, 0.0, 0.0))
+        grid.Children.Add(highlight) |> ignore
+
+        let spark =
+            Ellipse(
+                Width = 6.0,
+                Height = 6.0,
+                Fill = SolidColorBrush(Color.FromRgb(0xFFuy, 0xD9uy, 0x3Duy)),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = Thickness(0.0, 1.0, 1.0, 0.0))
+        grid.Children.Add(spark) |> ignore
+
+        grid :> Control
 
     do this.InitializeComponent()
 
@@ -59,12 +103,19 @@ type MainWindow() as this =
                         VerticalAlignment = VerticalAlignment.Center,
                         FontSize = 20.0,
                         FontWeight = FontWeight.Bold)
+                let bomb = createBombGlyph ()
+                bomb.IsVisible <- false
+
+                let inner = Grid()
+                inner.Children.Add(txt) |> ignore
+                inner.Children.Add(bomb) |> ignore
+
                 let cell =
                     Border(
                         Background = hiddenBrush,
                         Margin = Thickness(1.0),
                         CornerRadius = CornerRadius(3.0),
-                        Child = txt)
+                        Child = inner)
                 let row, col = r, c
                 cell.PointerEntered.Add(fun _ ->
                     if not (Set.contains (row, col) state.Revealed)
@@ -83,6 +134,7 @@ type MainWindow() as this =
                             this.HandleLeftClick(row, col))
                 cells.[r, c] <- cell
                 cellTexts.[r, c] <- txt
+                cellBombs.[r, c] <- bomb
                 boardGrid.Children.Add(cell) |> ignore
 
         restartBtn.Click.Add(fun _ -> this.Restart())
@@ -91,25 +143,29 @@ type MainWindow() as this =
     member private this.RefreshCell(r: int, c: int) =
         let cell = cells.[r, c]
         let txt = cellTexts.[r, c]
+        let bomb = cellBombs.[r, c]
         if gameOver && Set.contains (r, c) state.Mines then
             cell.Background <- mineBrush
-            txt.Text <- "*"
-            txt.Foreground <- SolidColorBrush(Colors.White)
-        elif Set.contains (r, c) state.Revealed then
-            cell.Background <- revealedBrush
-            let n = countAdjacentMines state.Mines (r, c)
-            if n = 0 then
-                txt.Text <- ""
-            else
-                txt.Text <- string n
-                txt.Foreground <- numberBrush n
-        elif Set.contains (r, c) state.Flags then
-            cell.Background <- hiddenBrush
-            txt.Text <- "F"
-            txt.Foreground <- flagFg
+            txt.IsVisible <- false
+            bomb.IsVisible <- true
         else
-            cell.Background <- hiddenBrush
-            txt.Text <- ""
+            bomb.IsVisible <- false
+            txt.IsVisible <- true
+            if Set.contains (r, c) state.Revealed then
+                cell.Background <- revealedBrush
+                let n = countAdjacentMines state.Mines (r, c)
+                if n = 0 then
+                    txt.Text <- ""
+                else
+                    txt.Text <- string n
+                    txt.Foreground <- numberBrush n
+            elif Set.contains (r, c) state.Flags then
+                cell.Background <- hiddenBrush
+                txt.Text <- "F"
+                txt.Foreground <- flagFg
+            else
+                cell.Background <- hiddenBrush
+                txt.Text <- ""
 
     member private this.RefreshAll() =
         for r in 0 .. SIZE - 1 do
@@ -161,42 +217,30 @@ type MainWindow() as this =
         animating <- false
         let board = this.FindControl<Border>("BoardContainer")
         board.RenderTransform <- null
-        let overlay = this.FindControl<Border>("FlashOverlay")
-        overlay.Opacity <- 0.0
-        let eqText = this.FindControl<TextBlock>("EarthquakeText")
-        eqText.Opacity <- 0.0
         this.RefreshAll()
 
+    // EARTHQUAKE animation: shake only — no color flash, no flashing text.
+    // The status bar's "REVEALS TO QUAKE" counter resetting to 5 is the
+    // additional non-visual cue.
     member private this.PlayEarthquakeAndRefresh() =
         animating <- true
         let board = this.FindControl<Border>("BoardContainer")
-        let overlay = this.FindControl<Border>("FlashOverlay")
-        let eqText = this.FindControl<TextBlock>("EarthquakeText")
         let transform = TranslateTransform()
         board.RenderTransform <- transform
-        eqText.Opacity <- 1.0
 
-        // Shake offsets played one per timer tick
+        // Shake offsets played one per timer tick (~50ms)
         let shakes = [| -16.0; 14.0; -12.0; 10.0; -7.0; 5.0; -3.0; 2.0; 0.0 |]
-        // Flash opacities for the yellow overlay
-        let flashes = [| 0.85; 0.0; 0.7; 0.0; 0.5; 0.0; 0.3; 0.0 |]
-        let totalFrames = max shakes.Length flashes.Length + 4
         let mutable frame = 0
 
         let timer = DispatcherTimer()
-        timer.Interval <- TimeSpan.FromMilliseconds(48.0)
+        timer.Interval <- TimeSpan.FromMilliseconds(50.0)
         timer.Tick.Add(fun _ ->
-            if frame < shakes.Length then transform.X <- shakes.[frame]
-            if frame < flashes.Length then overlay.Opacity <- flashes.[frame]
-            // Fade the EARTHQUAKE label out near the end
-            if frame >= totalFrames - 4 then
-                eqText.Opacity <- eqText.Opacity * 0.6
+            if frame < shakes.Length then
+                transform.X <- shakes.[frame]
             frame <- frame + 1
-            if frame >= totalFrames then
+            if frame >= shakes.Length then
                 timer.Stop()
                 transform.X <- 0.0
-                overlay.Opacity <- 0.0
-                eqText.Opacity <- 0.0
                 this.RefreshAll()
                 if isWon state then
                     won <- true

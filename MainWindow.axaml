@@ -25,19 +25,11 @@
                     Padding="14,6" VerticalAlignment="Center" FontWeight="Bold"/>
         </Grid>
 
-        <!-- Board area (with overlay) -->
-        <Grid Grid.Row="1">
-            <Border x:Name="BoardContainer" Background="#101012" CornerRadius="6" Padding="4">
-                <UniformGrid x:Name="BoardGrid" Rows="9" Columns="9"/>
-            </Border>
-            <Border x:Name="FlashOverlay"
-                    Background="#FFE066" Opacity="0"
-                    IsHitTestVisible="False" CornerRadius="6"/>
-            <TextBlock x:Name="EarthquakeText" Text="EARTHQUAKE!"
-                       FontSize="56" FontWeight="Bold" Foreground="#FF2D2D"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                       Opacity="0" IsHitTestVisible="False"/>
-        </Grid>
+        <!-- Board area -->
+        <Border Grid.Row="1" x:Name="BoardContainer"
+                Background="#101012" CornerRadius="6" Padding="4">
+            <UniformGrid x:Name="BoardGrid" Rows="9" Columns="9"/>
+        </Border>
 
         <!-- Footer hint -->
         <TextBlock Grid.Row="2"
