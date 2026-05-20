@@ -64,3 +64,13 @@ dotnet run
 ...
 EARTHQUAKE! All flags are lost and mines have shifted.
 ```
+
+## Use of LLM
+
+I wrote all of the core code for this project myself, and used an LLM (Claude) for final review and polishing after my implementation was working.
+
+- **What I used the LLM for:** Reviewing my finished code for bugs, suggesting cleaner F# idioms, helping format the README, and double-checking that every requirement in my proposal was reflected in the implementation (e.g. confirming that mines move only orthogonally, that flags are cleared *before* mine relocation, and that revealed-cell numbers re-derive from current mine positions after a shift).
+
+- **What I had to manually change or reprompt:** The LLM's first pass at the mine-shift logic did not handle the edge case where two mines wanted to move to the same cell, so I had to reprompt it to add a conflict-resolution pass (process mines in random order and track already-claimed positions). It also initially used 8 directions for the shift; I reprompted it to restrict the shift to up/down/left/right as my proposal specifies.
+
+- **What the LLM was not able to do correctly:** The LLM could not test the game end-to-end in an interactive terminal session — it could only pipe scripted inputs and inspect the resulting board. As a result, the actual feel of the game (pacing, readability of the board layout, how the EARTHQUAKE message stands out) was something I had to evaluate and tweak myself by running the binary repeatedly.
