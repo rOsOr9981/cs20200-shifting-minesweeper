@@ -6,25 +6,118 @@ You play on a 9×9 grid with 10 hidden mines. Every 5th reveal triggers an **EAR
 
 ## Setup & Execution
 
-Requires **.NET 10 SDK** ([download here](https://dotnet.microsoft.com/download/dotnet/10.0)). No other dependencies — the first `dotnet run` fetches Avalonia from NuGet automatically.
+The only thing you need is the **.NET 10 SDK**. Everything else (Avalonia, the F# compiler, etc.) is downloaded automatically the first time you run the game.
 
-**Windows:**
+If you have already installed .NET 10 and just want the short version: clone the repo and run `run.bat` on Windows or `./run.sh` on macOS/Linux. The detailed step-by-step instructions below assume you have done none of that before.
+
+### Step 1 — Install the .NET 10 SDK
+
+The .NET 10 SDK is a free program from Microsoft that lets your computer compile and run F# code. You only need to do this once.
+
+#### On Windows
+
+1. Open this page in your web browser:
+   <https://dotnet.microsoft.com/download/dotnet/10.0>
+2. Under **".NET 10.0"**, find the **SDK** column and click the **Windows** **x64** installer (most modern PCs are x64; if you have a very new ARM PC use **Arm64**).
+3. Run the downloaded `.exe` file and click **Install**. When it finishes, click **Close**.
+4. To check it worked, press the **Windows key**, type `cmd`, and open **Command Prompt**. Type:
+   ```
+   dotnet --version
+   ```
+   and press **Enter**. You should see something like `10.0.100`. If you see "command not recognized," close and reopen Command Prompt and try again.
+
+#### On macOS
+
+1. Open this page in Safari or another browser:
+   <https://dotnet.microsoft.com/download/dotnet/10.0>
+2. Under **".NET 10.0"**, find the **SDK** column and click the **macOS** installer:
+   - If you have an **Apple Silicon Mac** (M1, M2, M3, M4 — anything from late 2020 onward), pick **Arm64**.
+   - If you have an **Intel Mac**, pick **x64**.
+   - Not sure which one? Click the Apple menu → "About This Mac". If it says "Chip: Apple M…" it is Apple Silicon. If it says "Processor: Intel…" it is Intel.
+3. Open the downloaded `.pkg` file. macOS will ask for your password and walk you through the installer — just keep clicking **Continue** and **Install**.
+4. To check it worked, open the **Terminal** app (press **Cmd + Space**, type `terminal`, hit Enter). Type:
+   ```
+   dotnet --version
+   ```
+   and press **Return**. You should see something like `10.0.100`.
+
+### Step 2 — Get the project files
+
+You have two ways to download the code. Either is fine.
+
+**Easiest (no Git needed):**
+
+1. Open this page in your browser:
+   <https://github.com/rOsOr9981/cs20200-shifting-minesweeper>
+2. Click the green **`< > Code`** button near the top right.
+3. Click **Download ZIP**.
+4. Find the downloaded `cs20200-shifting-minesweeper-main.zip` file (usually in your **Downloads** folder) and double-click it to unzip. You will end up with a folder named `cs20200-shifting-minesweeper-main`.
+
+**With Git (if you already have Git installed):**
+
 ```
-run.bat
+git clone https://github.com/rOsOr9981/cs20200-shifting-minesweeper.git
 ```
 
-**Unix/macOS:**
-```
-chmod +x run.sh
-./run.sh
-```
+This creates a folder called `cs20200-shifting-minesweeper` in whatever directory your terminal is currently in.
 
-**Direct method:**
+### Step 3 — Run the game
+
+#### On Windows
+
+1. Open the project folder in **File Explorer** (the unzipped folder from Step 2).
+2. Double-click **`run.bat`**.
+   - If a blue "Windows protected your PC" dialog appears, click **More info** → **Run anyway**. This happens because `.bat` files from the internet are treated as untrusted by Windows; the file is just three lines of plain text and you can open it in Notepad to verify.
+3. A black command window will appear and say things like "복원할 프로젝트를 확인하는 중…" / "Restoring NuGet packages…". On the **first run only**, this takes 1–2 minutes while Avalonia downloads. On every later run it is almost instant.
+4. A game window titled **"Shifting Minesweeper"** appears. Have fun!
+
+#### On macOS
+
+1. Open the **Terminal** app.
+2. Navigate into the project folder. If you unzipped it to your **Downloads** folder, type:
+   ```
+   cd ~/Downloads/cs20200-shifting-minesweeper-main
+   ```
+   (If you used `git clone` from your home directory, it's `cd ~/cs20200-shifting-minesweeper` instead. Adjust the path to wherever your project folder is.)
+3. The first time only, give the run script permission to execute:
+   ```
+   chmod +x run.sh
+   ```
+4. Run the game:
+   ```
+   ./run.sh
+   ```
+5. On the **first run only**, Terminal will show "Restoring packages…" and similar messages for 1–2 minutes while Avalonia downloads. After that, the **Shifting Minesweeper** window opens. On every later run it is almost instant.
+
+#### On Linux (bonus)
+
+Same as macOS. Open a terminal, `cd` into the project folder, `chmod +x run.sh`, then `./run.sh`. You need a graphical desktop session, since this is a GUI app.
+
+#### Alternative for any OS — direct `dotnet` command
+
+If `run.bat` / `run.sh` does not work for some reason, you can always run the game manually from inside the project folder:
+
 ```
 dotnet run
 ```
 
-A desktop window titled *"Shifting Minesweeper"* will open.
+This does exactly the same thing the run scripts do.
+
+### Troubleshooting
+
+- **"dotnet: command not found" or "'dotnet' is not recognized"** — The .NET 10 SDK is not installed yet, or your terminal was already open when you installed it. Close and reopen the terminal and try again. If it still fails, repeat Step 1.
+- **"permission denied: ./run.sh" on macOS/Linux** — Run `chmod +x run.sh` first (see Step 3, macOS instructions point 3).
+- **The first run is very slow** — That is normal. NuGet is downloading Avalonia (~80 MB). It only happens once.
+- **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
+- **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
+
+### Running the original CLI version instead
+
+The repository also contains the original terminal-based version under [`cli/`](./cli/). It runs without a window, just inside the terminal. To launch it:
+
+```
+dotnet run --project cli/ShiftingMinesweeper.fsproj
+```
 
 ## How to Play
 
