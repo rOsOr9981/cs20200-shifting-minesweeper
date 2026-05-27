@@ -111,13 +111,6 @@ This does exactly the same thing the run scripts do.
 - **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
 - **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
 
-### Running the original CLI version instead
-
-The repository also contains the original terminal-based version under [`cli/`](./cli/). It runs without a window, just inside the terminal. To launch it:
-
-```
-dotnet run --project cli/ShiftingMinesweeper.fsproj
-```
 
 ## How to Play
 
@@ -127,7 +120,8 @@ dotnet run --project cli/ShiftingMinesweeper.fsproj
 | **Right-click** an unrevealed cell | Flag / unflag it |
 | **Restart** button (top right) | Start a new game |
 
-- The **first** reveal of every game is always safe — if the chosen cell would have been a mine, that mine is relocated to a random other empty cell before the reveal is processed.
+- The **first** reveal of every game is always safe — the 10 mines are placed only **after** your first click, with the clicked cell guaranteed to be excluded from the mine layout. You can click anywhere to start without ever losing on move 1.
+- **Flagged cells cannot be revealed.** Left-clicking a flagged cell does nothing — you must first right-click it to remove the flag, then left-click to reveal. This protects you from accidentally detonating a cell you suspect.
 - Revealing a cell with 0 adjacent mines auto-reveals all connected safe cells.
 - Revealing a mine ends the game (**GAME OVER**) and shows every mine as a bomb glyph.
 - Every **5th reveal** triggers an **EARTHQUAKE**: the board shakes for about half a second, all flags vanish, and each mine moves one step (up, down, left, or right) to a random non-revealed cell. The animation is **shake-only** — there is no flashing color, to avoid photosensitivity issues.
@@ -152,27 +146,22 @@ The proposal described a **CLI** game. The final implementation is a **GUI** gam
 
 **Justification:** the EARTHQUAKE twist depends heavily on the player *seeing* the board change. In a terminal the shift is barely felt — a static board redraws with slightly different numbers. In the GUI the shake animation gives the event the visceral, "the floor moved" quality the proposal was aiming for, while every requirement from the original proposal is preserved exactly (9×9 board, 10 mines, R/F actions, every 5th reveal triggers a shift, mines move only orthogonally, mines cannot enter revealed cells, revealed cell numbers update after a shift, win when all non-mine cells are revealed).
 
-Two additional player-friendly behaviors were added in the GUI version that the proposal did not specify:
+Three additional player-friendly behaviors were added in the GUI version that the proposal did not specify:
 
-- **First-click safety:** the first reveal of every game is guaranteed to not be a mine. If the random initial layout placed a mine on the clicked cell, that mine is moved to a random empty cell before the reveal is processed. This is a one-way addition — no original requirement was changed or removed.
+- **First-click safety:** the first reveal of every game is guaranteed to not be a mine. The 10 mines are generated lazily after the first click rather than at game start, and the clicked cell is excluded from the candidate set. The mine count (10) and every other rule are unchanged from the proposal — this only changes *when* the mines are generated, not how many or how they behave.
+- **Flag protects against accidental reveal:** left-clicking a cell that the player has already flagged does nothing, instead of revealing it. The player must explicitly unflag before revealing. This is a standard quality-of-life rule in Minesweeper variants and does not change any original requirement — it only restricts the cases in which a reveal can occur.
 - **Photosensitivity-safe EARTHQUAKE animation:** an earlier iteration of the animation flashed a yellow overlay and a red "EARTHQUAKE!" banner during the shake. Both were removed so the animation is just the shake. This is an accessibility-driven simplification — the underlying gameplay event (clear flags, shift mines, recompute numbers) is unchanged.
-
-The original CLI implementation is preserved under [`cli/`](./cli/) and can still be run with `dotnet run --project cli/ShiftingMinesweeper.fsproj`.
 
 ## Project Structure
 
 ```
-/                              ← GUI project (default)
 ├── Board.fs                   ← Game logic (mines, reveal, shift, win)
 ├── MainWindow.axaml(.fs)      ← Game window, click handlers, animations
 ├── App.axaml(.fs)             ← Application entry
 ├── Program.fs                 ← Avalonia bootstrap
 ├── ShiftingMinesweeper.fsproj
-├── run.bat / run.sh
-└── cli/                       ← Original CLI version (backup)
-    ├── ShiftingMinesweeper.fsproj
-    ├── ShiftingMinesweeper/{Board,Game,Program}.fs
-    └── run.bat, run.sh
+├── app.manifest
+└── run.bat, run.sh            ← Convenience launchers
 ```
 
 ## Use of LLM

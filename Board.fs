@@ -26,13 +26,27 @@ module Board =
             if nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && Set.contains (nr, nc) mines
             then 1 else 0)
 
-    let initGame (rng: Random) =
-        let mutable mines = Set.empty
-        while Set.count mines < NUM_MINES do
-            let r = rng.Next(SIZE)
-            let c = rng.Next(SIZE)
-            mines <- Set.add (r, c) mines
-        { Mines = mines; Revealed = Set.empty; Flags = Set.empty; RevealCount = 0 }
+    let initGame (_: Random) =
+        // Mines are placed lazily on the first reveal (see ensureMinesPlaced)
+        // so the first reveal is guaranteed safe by construction — the clicked
+        // cell is excluded from the candidate pool when mines are generated.
+        { Mines = Set.empty
+          Revealed = Set.empty
+          Flags = Set.empty
+          RevealCount = 0 }
+
+    /// Place NUM_MINES mines, excluding the given "safe" cell. Called on the
+    /// very first reveal of a game.
+    let private ensureMinesPlaced (state: GameState) (safeR: int, safeC: int) (rng: Random) =
+        if not (Set.isEmpty state.Mines) then state
+        else
+            let mutable mines = Set.empty
+            while Set.count mines < NUM_MINES do
+                let r = rng.Next(SIZE)
+                let c = rng.Next(SIZE)
+                if (r, c) <> (safeR, safeC) then
+                    mines <- Set.add (r, c) mines
+            { state with Mines = mines }
 
     let revealCells (state: GameState) (startR: int, startC: int) =
         if Set.contains (startR, startC) state.Mines then state
@@ -62,67 +76,72 @@ module Board =
         // Mines move only orthogonally (up/down/left/right), one cell, and
         // never into revealed cells. Cells that were flagged just before the
         // shift are valid targets because flags are cleared as part of the shift.
+        //
+        // Mine count must be preserved: every mine ends up at a distinct cell.
+        // We try a random sequential assignment; if it fails (two mines forced
+        // into the same cell), we retry with a different random ordering. With
+        // 10 mines on an 81-cell board, a valid assignment is found almost
+        // always on the first try.
         let dirs = [| (-1, 0); (1, 0); (0, -1); (0, 1) |]
-        let mines = state.Mines |> Set.toArray |> Array.sortBy (fun _ -> rng.Next())
-        let mutable placed = Set.empty
-        for (r, c) in mines do
-            let valid =
-                dirs
-                |> Array.choose (fun (dr, dc) ->
-                    let nr, nc = r + dr, c + dc
-                    if nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE
-                       && not (Set.contains (nr, nc) state.Revealed)
-                       && not (Set.contains (nr, nc) placed)
-                    then Some (nr, nc)
-                    else None)
-            let newPos =
-                if valid.Length > 0 then valid.[rng.Next(valid.Length)]
-                elif not (Set.contains (r, c) placed) then (r, c)
-                else
-                    // Rare fallback: original spot taken by another mine.
-                    let fb =
-                        dirs
-                        |> Array.choose (fun (dr, dc) ->
-                            let nr, nc = r + dr, c + dc
-                            if nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE
-                               && not (Set.contains (nr, nc) state.Revealed)
-                            then Some (nr, nc) else None)
-                    if fb.Length > 0 then fb.[rng.Next(fb.Length)] else (r, c)
-            placed <- Set.add newPos placed
-        { state with Mines = placed; Flags = Set.empty }
 
-    /// Guarantee that the very first reveal never lands on a mine.
-    /// If it would, relocate that mine to a random other non-mine cell.
-    let private ensureFirstSafe (state: GameState) (r: int, c: int) (rng: Random) =
-        if state.RevealCount > 0 || not (Set.contains (r, c) state.Mines) then
-            state
-        else
-            let candidates =
-                [| for nr in 0 .. SIZE - 1 do
-                       for nc in 0 .. SIZE - 1 do
-                           if (nr, nc) <> (r, c) && not (Set.contains (nr, nc) state.Mines) then
-                               yield (nr, nc) |]
-            if candidates.Length = 0 then state
+        let tryAttempt () =
+            let order =
+                state.Mines |> Set.toArray |> Array.sortBy (fun _ -> rng.Next())
+            let mutable placed = Set.empty
+            let mutable success = true
+            let mutable i = 0
+            while success && i < order.Length do
+                let (r, c) = order.[i]
+                let valid =
+                    dirs
+                    |> Array.choose (fun (dr, dc) ->
+                        let nr, nc = r + dr, c + dc
+                        if nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE
+                           && not (Set.contains (nr, nc) state.Revealed)
+                           && not (Set.contains (nr, nc) placed)
+                        then Some (nr, nc)
+                        else None)
+                let chosen =
+                    if valid.Length > 0 then Some valid.[rng.Next(valid.Length)]
+                    elif not (Set.contains (r, c) placed) then Some (r, c)
+                    else None
+                match chosen with
+                | Some p -> placed <- Set.add p placed
+                | None -> success <- false
+                i <- i + 1
+            if success && Set.count placed = order.Length then Some placed
+            else None
+
+        let rec attempt n =
+            if n >= 100 then state.Mines  // fallback: no movement this round
             else
-                let newPos = candidates.[rng.Next(candidates.Length)]
-                { state with Mines = state.Mines |> Set.remove (r, c) |> Set.add newPos }
+                match tryAttempt () with
+                | Some result -> result
+                | None -> attempt (n + 1)
+
+        { state with Mines = attempt 0; Flags = Set.empty }
 
     /// Attempt to reveal a cell. Returns Revealed, HitMine, or NoOp.
+    /// Flagged cells cannot be revealed — the player must unflag first.
+    /// On the very first reveal of a game, mines are generated lazily with the
+    /// clicked cell excluded, so the first reveal is always safe.
     /// When the resulting RevealCount is a multiple of 5, an earthquake fires
     /// and mines are shifted before returning.
     let handleReveal (state: GameState) (r: int, c: int) (rng: Random) =
-        let state = ensureFirstSafe state (r, c) rng
         if Set.contains (r, c) state.Revealed then NoOp
-        elif Set.contains (r, c) state.Mines then HitMine
+        elif Set.contains (r, c) state.Flags then NoOp
         else
-            let revealed = revealCells state (r, c)
-            let newCount = revealed.RevealCount + 1
-            let counted = { revealed with RevealCount = newCount }
-            let earthquake = newCount % 5 = 0
-            let final =
-                if earthquake then shiftMines counted rng
-                else counted
-            Revealed(final, earthquake)
+            let state = ensureMinesPlaced state (r, c) rng
+            if Set.contains (r, c) state.Mines then HitMine
+            else
+                let revealed = revealCells state (r, c)
+                let newCount = revealed.RevealCount + 1
+                let counted = { revealed with RevealCount = newCount }
+                let earthquake = newCount % 5 = 0
+                let final =
+                    if earthquake then shiftMines counted rng
+                    else counted
+                Revealed(final, earthquake)
 
     let isWon (state: GameState) =
         let nonMineCells = SIZE * SIZE - Set.count state.Mines
