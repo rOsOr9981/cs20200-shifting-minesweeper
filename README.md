@@ -6,7 +6,11 @@
 
 A 9×9 Minesweeper game with a dynamic twist, built with **F# + .NET 10 + Avalonia 12**.
 
-You play on a 9×9 grid with 10 hidden mines. Every 5th reveal triggers an **EARTHQUAKE** — all flags are lost and every mine shifts one step in a random direction. Adapt to the ever-changing board to survive and win.
+You play on a 9×9 grid with 10 hidden mines. Every 5th reveal triggers an **EARTHQUAKE** — all flags are lost and every mine shifts one step in a random orthogonal direction (up, down, left, or right). Adapt to the ever-changing board to survive and win.
+
+<p align="center">
+  <img src="Screenshot.png" alt="In-game screenshot of Shifting Minesweeper" width="380">
+</p>
 
 ## Setup & Execution
 
