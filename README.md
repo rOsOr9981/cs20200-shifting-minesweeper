@@ -73,25 +73,18 @@ This creates a folder called `cs20200-shifting-minesweeper` in whatever director
 
 #### On macOS
 
-1. Open the **Terminal** app.
-2. Navigate into the project folder. If you unzipped it to your **Downloads** folder, type:
-   ```
-   cd ~/Downloads/cs20200-shifting-minesweeper-main
-   ```
-   (If you used `git clone` from your home directory, it's `cd ~/cs20200-shifting-minesweeper` instead. Adjust the path to wherever your project folder is.)
-3. The first time only, give the run script permission to execute:
-   ```
-   chmod +x run.sh
-   ```
-4. Run the game:
-   ```
-   ./run.sh
-   ```
-5. On the **first run only**, Terminal will show "Restoring packages…" and similar messages for 1–2 minutes while Avalonia downloads. After that, the **Shifting Minesweeper** window opens. On every later run it is almost instant.
+1. Open the project folder in **Finder** (the unzipped or cloned folder from Step 2).
+2. Double-click **`run.command`**.
+   - The first time, macOS may show a warning like *"run.command can't be opened because it is from an unidentified developer"*. If that happens, **right-click** (or Control-click) `run.command`, choose **Open**, then click **Open** in the dialog. After this one-time approval, double-clicking works normally.
+3. A Terminal window opens and shows "Restoring packages…" and similar messages. On the **first run only** this takes 1–2 minutes while Avalonia downloads. On every later run it is almost instant.
+4. A game window titled **"Shifting Minesweeper"** appears. Have fun!
+5. When you close the game, the Terminal window will say `[Process completed]`. You can close it manually — it does not close itself.
+
+If you prefer to work from Terminal instead, open Terminal, `cd` into the project folder, and run `./run.sh` (it does the same thing as `run.command`).
 
 #### On Linux (bonus)
 
-Same as macOS. Open a terminal, `cd` into the project folder, `chmod +x run.sh`, then `./run.sh`. You need a graphical desktop session, since this is a GUI app.
+Open a terminal, `cd` into the project folder, then run `./run.sh`. You need a graphical desktop session, since this is a GUI app.
 
 #### Alternative for any OS — direct `dotnet` command
 
@@ -106,7 +99,7 @@ This does exactly the same thing the run scripts do.
 ### Troubleshooting
 
 - **"dotnet: command not found" or "'dotnet' is not recognized"** — The .NET 10 SDK is not installed yet, or your terminal was already open when you installed it. Close and reopen the terminal and try again. If it still fails, repeat Step 1.
-- **"permission denied: ./run.sh" on macOS/Linux** — Run `chmod +x run.sh` first (see Step 3, macOS instructions point 3).
+- **"permission denied: ./run.sh" or `./run.command` on macOS/Linux** — Should not happen with a fresh clone (the executable bit is committed in Git), but if you downloaded the ZIP via some tool that strips permissions, run `chmod +x run.sh run.command` once.
 - **The first run is very slow** — That is normal. NuGet is downloading Avalonia (~80 MB). It only happens once.
 - **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
 - **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
@@ -163,7 +156,7 @@ Three additional player-friendly behaviors were added in the GUI version that th
 ├── Program.fs                 ← Avalonia bootstrap
 ├── ShiftingMinesweeper.fsproj
 ├── app.manifest
-└── run.bat, run.sh            ← Convenience launchers
+└── run.bat, run.command, run.sh  ← Double-click launchers (Windows / macOS / Linux)
 ```
 
 ## Use of LLM
