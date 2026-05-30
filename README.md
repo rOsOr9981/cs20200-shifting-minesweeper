@@ -156,9 +156,6 @@ The top status bar shows reveals remaining until the next earthquake, the flag c
 
 ## Changes from Proposal
 
-<details>
-<summary>Expand</summary>
-
 The proposal described a **CLI** game; the final implementation is a **GUI** game built with Avalonia. The game logic (mine count, shift rules, win condition) is unchanged — only the input/output form was amended, plus a few player-friendly additions described below. The change of form is allowed by Section 2 of the project specification, which explicitly permits "text-based, graphical, web-based, or [other] form" games.
 
 ### Requirement amendments
@@ -176,6 +173,9 @@ Only three of the nine proposal requirements have been amended; all others are i
 
 ### Additional player-friendly behaviors
 
+<details>
+<summary>Expand</summary>
+
 The following were added in the GUI version. None of them remove or contradict any proposal requirement — they only restrict the cases under which an action is allowed, or refine *when* / *where* a state is computed.
 
 - **First-click safety with an opening flood:** the first reveal of every game is guaranteed to not be a mine, and is also guaranteed to open a non-trivial empty area. The 10 mines are generated lazily after the first click rather than at game start, and both the clicked cell *and its 8 surrounding cells* are excluded from the candidate set, so the clicked cell has zero adjacent mines and the recursive reveal kicks in. The mine count (10) and every other rule are unchanged from the proposal — this only changes *when* and *where* the mines are generated, not how many or how they behave.
@@ -186,9 +186,6 @@ The following were added in the GUI version. None of them remove or contradict a
 </details>
 
 ## Requirements Compliance Checklist
-
-<details>
-<summary>Expand</summary>
 
 The table below maps each of the nine proposal requirements to its implementation location and a quick in-game verification step, so a reviewer can audit faithfulness without reading the source.
 
@@ -203,8 +200,6 @@ The table below maps each of the nine proposal requirements to its implementatio
 | 7 | Mines never shift into revealed cells; stay if no valid move | `Board.fs`: `shiftMines` filters by `not (Set.contains _ state.Revealed)` | Revealed cells stay safe across earthquakes; the mine count never drops. |
 | 8 | After Shift, revealed cells' numbers update | `RefreshCell` recomputes `countAdjacentMines` on every refresh from the current mine set | The same revealed cell may show a different digit before vs. after a quake. |
 | 9 | Win when all non-mine cells are revealed | `Board.fs`: `isWon` (called after each reveal and after each quake) | Reveal every safe cell; status changes to `YOU WIN!`. |
-
-</details>
 
 ## Project Structure
 
