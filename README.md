@@ -16,7 +16,7 @@ You play on a 9×9 grid with 10 hidden mines. Every 5th reveal triggers an **EAR
 
 The only thing you need is the **.NET 10 SDK**. Everything else (Avalonia, the F# compiler, etc.) is downloaded automatically the first time you run the game.
 
-If you have already installed .NET 10 and just want the short version: clone the repo and double-click `run.bat` on Windows or `run.command` on macOS. The detailed step-by-step instructions below assume you have done none of that before.
+If you have already installed .NET 10 and just want the short version: clone the repo and double-click `run.bat` on Windows or `run.command` on macOS, or run `./run.sh` from a terminal on Linux. The detailed step-by-step instructions below assume you have done none of that before.
 
 <details>
 <summary><b>Step 1 — Install the .NET 10 SDK</b></summary>
@@ -95,9 +95,17 @@ This creates a folder called `cs20200-shifting-minesweeper` in whatever director
 4. A game window titled **"Shifting Minesweeper"** appears. Have fun!
 5. When you close the game, the Terminal window will say `[Process completed]`. You can close it manually — it does not close itself.
 
+**On Linux**
+
+Open a terminal in the project folder and run:
+```
+./run.sh
+```
+This requires a graphical desktop session (X11 or WSLg), since the game uses a desktop window. If you get an error about missing shared libraries, see the **Troubleshooting** section below.
+
 **Alternative for any OS — direct `dotnet` command**
 
-If `run.bat` / `run.command` does not work for some reason, you can always run the game manually from inside the project folder:
+If `run.bat` / `run.command` / `run.sh` does not work for some reason, you can always run the game manually from inside the project folder:
 
 ```
 dotnet run
@@ -111,10 +119,15 @@ This does exactly the same thing the run scripts do.
 <summary><b>Troubleshooting</b></summary>
 
 - **"dotnet: command not found" or "'dotnet' is not recognized"** — The .NET 10 SDK is not installed yet, or your terminal was already open when you installed it. Close and reopen the terminal and try again. If it still fails, repeat Step 1.
-- **"permission denied: ./run.command" on macOS** — Should not happen with a fresh clone (the executable bit is committed in Git), but if you downloaded the ZIP via some tool that strips permissions, run `chmod +x run.command` once in Terminal.
+- **"permission denied: ./run.command" or `./run.sh` on macOS/Linux** — Should not happen with a fresh clone (the executable bit is committed in Git), but if you downloaded the ZIP via some tool that strips permissions, run `chmod +x run.command run.sh` once in Terminal.
 - **The first run is very slow** — That is normal. NuGet is downloading Avalonia (~80 MB). It only happens once.
 - **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
 - **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
+- **"Unable to load shared library 'libICE.so.6'" on Linux / WSL2** — Avalonia needs X11 libraries that are not always pre-installed on minimal Linux images. Install them with:
+  ```
+  sudo apt install -y libice6 libsm6 libx11-6 libxext6 libxrandr2 libxi6 libxcursor1 libxfixes3 libxrender1 libfontconfig1
+  ```
+  On WSL2, GUI support (WSLg) is required — Windows 11 includes it by default; on Windows 10 you need an external X server such as VcXsrv.
 
 </details>
 
@@ -217,7 +230,7 @@ The table below maps each of the nine proposal requirements to its implementatio
 ├── Program.fs                 ← Avalonia bootstrap
 ├── ShiftingMinesweeper.fsproj
 ├── app.manifest
-└── run.bat, run.command          ← Double-click launchers (Windows / macOS)
+└── run.bat, run.command, run.sh  ← Launchers (Windows / macOS / Linux)
 ```
 
 </details>
