@@ -101,7 +101,7 @@ Open a terminal in the project folder and run:
 ```
 ./run.sh
 ```
-This requires a graphical desktop session (X11 or WSLg), since the game uses a desktop window. If you get an error about missing shared libraries, see the **Troubleshooting** section below.
+This requires a graphical desktop session (X11 or WSLg). On Debian/Ubuntu-based systems, the script automatically installs the X11 libraries Avalonia needs (via `sudo apt`) the first time you run it — you will be prompted for your password. On non-apt distros (Fedora, Arch, etc.), see the **Troubleshooting** section below for the manual install command.
 
 **Alternative for any OS — direct `dotnet` command**
 
@@ -123,11 +123,11 @@ This does exactly the same thing the run scripts do.
 - **The first run is very slow** — That is normal. NuGet is downloading Avalonia (~80 MB). It only happens once.
 - **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
 - **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
-- **"Unable to load shared library 'libICE.so.6'" on Linux / WSL2** — Avalonia needs X11 libraries that are not always pre-installed on minimal Linux images. Install them with:
+- **"Unable to load shared library 'libICE.so.6'" on Linux / WSL2** — Avalonia needs X11 libraries that are not always pre-installed on minimal Linux images. `./run.sh` installs them automatically on Debian/Ubuntu-based systems. On other distros, install equivalents of these packages manually — for example on Debian/Ubuntu:
   ```
   sudo apt install -y libice6 libsm6 libx11-6 libxext6 libxrandr2 libxi6 libxcursor1 libxfixes3 libxrender1 libfontconfig1
   ```
-  On WSL2, GUI support (WSLg) is required — Windows 11 includes it by default; on Windows 10 you need an external X server such as VcXsrv.
+  On Fedora, the packages are `libICE libSM libX11 libXext libXrandr libXi libXcursor libXfixes libXrender fontconfig` (via `dnf install`). On WSL2, GUI support (WSLg) is required — Windows 11 includes it by default; on Windows 10 you need an external X server such as VcXsrv.
 
 </details>
 
