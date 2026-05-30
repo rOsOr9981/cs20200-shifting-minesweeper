@@ -10,11 +10,12 @@ The only thing you need is the **.NET 10 SDK**. Everything else (Avalonia, the F
 
 If you have already installed .NET 10 and just want the short version: clone the repo and double-click `run.bat` on Windows or `run.command` on macOS. The detailed step-by-step instructions below assume you have done none of that before.
 
-### Step 1 — Install the .NET 10 SDK
+<details>
+<summary><b>Step 1 — Install the .NET 10 SDK</b></summary>
 
 The .NET 10 SDK is a free program from Microsoft that lets your computer compile and run F# code. You only need to do this once.
 
-#### On Windows
+**On Windows**
 
 1. Open this page in your web browser:
    <https://dotnet.microsoft.com/download/dotnet/10.0>
@@ -26,7 +27,7 @@ The .NET 10 SDK is a free program from Microsoft that lets your computer compile
    ```
    and press **Enter**. You should see something like `10.0.100`. If you see "command not recognized," close and reopen Command Prompt and try again.
 
-#### On macOS
+**On macOS**
 
 1. Open this page in Safari or another browser:
    <https://dotnet.microsoft.com/download/dotnet/10.0>
@@ -41,7 +42,10 @@ The .NET 10 SDK is a free program from Microsoft that lets your computer compile
    ```
    and press **Return**. You should see something like `10.0.100`.
 
-### Step 2 — Get the project files
+</details>
+
+<details>
+<summary><b>Step 2 — Get the project files</b></summary>
 
 You have two ways to download the code. Either is fine.
 
@@ -61,9 +65,12 @@ git clone https://github.com/rOsOr9981/cs20200-shifting-minesweeper.git
 
 This creates a folder called `cs20200-shifting-minesweeper` in whatever directory your terminal is currently in.
 
-### Step 3 — Run the game
+</details>
 
-#### On Windows
+<details>
+<summary><b>Step 3 — Run the game</b></summary>
+
+**On Windows**
 
 1. Open the project folder in **File Explorer** (the unzipped folder from Step 2).
 2. Double-click **`run.bat`**.
@@ -71,7 +78,7 @@ This creates a folder called `cs20200-shifting-minesweeper` in whatever director
 3. A black command window will appear and say things like "복원할 프로젝트를 확인하는 중…" / "Restoring NuGet packages…". On the **first run only**, this takes 1–2 minutes while Avalonia downloads. On every later run it is almost instant.
 4. A game window titled **"Shifting Minesweeper"** appears. Have fun!
 
-#### On macOS
+**On macOS**
 
 1. Open the project folder in **Finder** (the unzipped or cloned folder from Step 2).
 2. Double-click **`run.command`**.
@@ -80,7 +87,7 @@ This creates a folder called `cs20200-shifting-minesweeper` in whatever director
 4. A game window titled **"Shifting Minesweeper"** appears. Have fun!
 5. When you close the game, the Terminal window will say `[Process completed]`. You can close it manually — it does not close itself.
 
-#### Alternative for any OS — direct `dotnet` command
+**Alternative for any OS — direct `dotnet` command**
 
 If `run.bat` / `run.command` does not work for some reason, you can always run the game manually from inside the project folder:
 
@@ -90,13 +97,18 @@ dotnet run
 
 This does exactly the same thing the run scripts do.
 
-### Troubleshooting
+</details>
+
+<details>
+<summary><b>Troubleshooting</b></summary>
 
 - **"dotnet: command not found" or "'dotnet' is not recognized"** — The .NET 10 SDK is not installed yet, or your terminal was already open when you installed it. Close and reopen the terminal and try again. If it still fails, repeat Step 1.
 - **"permission denied: ./run.command" on macOS** — Should not happen with a fresh clone (the executable bit is committed in Git), but if you downloaded the ZIP via some tool that strips permissions, run `chmod +x run.command` once in Terminal.
 - **The first run is very slow** — That is normal. NuGet is downloading Avalonia (~80 MB). It only happens once.
 - **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
 - **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
+
+</details>
 
 
 ## How to Play
@@ -161,4 +173,4 @@ I wrote all of the core code for this project myself, and used an LLM (Claude) f
 
 - **What I had to manually change or reprompt:** The LLM's first pass at the mine-shift logic did not handle the edge case where two mines wanted to move to the same cell, so I had to reprompt it to add a conflict-resolution pass (process mines in random order and track already-claimed positions). It also initially used 8 directions for the shift; I reprompted it to restrict the shift to up/down/left/right as my proposal specifies. For the GUI port, the LLM's first attempt at the earthquake animation used raw `Task.Delay` continuations, which I had to ask it to replace with `DispatcherTimer` so all updates would land on the UI thread reliably.
 
-- **What the LLM was not able to do correctly:** The LLM could not actually launch and interact with the GUI window. It could only check that the app started without crashing — the feel of the shake (offset magnitudes, timing) and the readability of the colored numbers were things I had to evaluate myself by running the binary repeatedly and tuning the values.
+- **What the LLM was not able to do correctly:** The LLM could not actually launch and play the GUI window — it could only check that the app started without crashing. As a result, **finding bugs through real play was entirely on me.** Every gameplay defect was discovered by me playing the game and noticing something off: the mine count silently dropping from 10 to 9 across several earthquakes (caused by two shifting mines being forced into the same cell), the flag counter being able to climb past 10 (no cap was enforced), the first reveal opening only a single boring cell instead of a real area, and several smaller layout and color issues. In every case, the LLM only produced a correct fix after I described the exact symptom; it never anticipated any of these problems on its own. The same applied to the feel of the shake (offset magnitudes, timing) and the readability of the colored numbers — I tuned those myself by running the binary repeatedly.
