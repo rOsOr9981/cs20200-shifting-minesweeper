@@ -35,16 +35,25 @@ module Board =
           Flags = Set.empty
           RevealCount = 0 }
 
-    /// Place NUM_MINES mines, excluding the given "safe" cell. Called on the
-    /// very first reveal of a game.
+    /// Place NUM_MINES mines on the first reveal of the game. The clicked cell
+    /// AND its 8 neighbors are excluded from the mine pool so that the clicked
+    /// cell has zero adjacent mines, triggering the flood fill and opening a
+    /// satisfyingly large empty area on the very first click.
     let private ensureMinesPlaced (state: GameState) (safeR: int, safeC: int) (rng: Random) =
         if not (Set.isEmpty state.Mines) then state
         else
+            let safeZone =
+                seq {
+                    for dr in -1 .. 1 do
+                        for dc in -1 .. 1 do
+                            yield (safeR + dr, safeC + dc)
+                }
+                |> Set.ofSeq
             let mutable mines = Set.empty
             while Set.count mines < NUM_MINES do
                 let r = rng.Next(SIZE)
                 let c = rng.Next(SIZE)
-                if (r, c) <> (safeR, safeC) then
+                if not (Set.contains (r, c) safeZone) then
                     mines <- Set.add (r, c) mines
             { state with Mines = mines }
 
@@ -69,6 +78,10 @@ module Board =
         if Set.contains (r, c) state.Revealed then state
         elif Set.contains (r, c) state.Flags then
             { state with Flags = Set.remove (r, c) state.Flags }
+        elif Set.count state.Flags >= NUM_MINES then
+            // Cap flag count at the number of mines: prevents flagging more
+            // cells than there could possibly be mines.
+            state
         else
             { state with Flags = Set.add (r, c) state.Flags }
 

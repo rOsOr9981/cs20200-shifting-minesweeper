@@ -120,8 +120,9 @@ This does exactly the same thing the run scripts do.
 | **Right-click** an unrevealed cell | Flag / unflag it |
 | **Restart** button (top right) | Start a new game |
 
-- The **first** reveal of every game is always safe — the 10 mines are placed only **after** your first click, with the clicked cell guaranteed to be excluded from the mine layout. You can click anywhere to start without ever losing on move 1.
+- The **first** reveal of every game is always safe **and** opens a satisfyingly large empty area — the 10 mines are placed only after your first click, with both the clicked cell *and its 8 surrounding cells* excluded from the mine layout. This guarantees the clicked cell has zero adjacent mines, which triggers the recursive reveal of all connected safe cells.
 - **Flagged cells cannot be revealed.** Left-clicking a flagged cell does nothing — you must first right-click it to remove the flag, then left-click to reveal. This protects you from accidentally detonating a cell you suspect.
+- **You can place at most 10 flags** (one per mine). Attempting to flag an 11th cell does nothing — unflag something first.
 - Revealing a cell with 0 adjacent mines auto-reveals all connected safe cells.
 - Revealing a mine ends the game (**GAME OVER**) and shows every mine as a bomb glyph.
 - Every **5th reveal** triggers an **EARTHQUAKE**: the board shakes for about half a second, all flags vanish, and each mine moves one step (up, down, left, or right) to a random non-revealed cell. The animation is **shake-only** — there is no flashing color, to avoid photosensitivity issues.
@@ -148,8 +149,9 @@ The proposal described a **CLI** game. The final implementation is a **GUI** gam
 
 Three additional player-friendly behaviors were added in the GUI version that the proposal did not specify:
 
-- **First-click safety:** the first reveal of every game is guaranteed to not be a mine. The 10 mines are generated lazily after the first click rather than at game start, and the clicked cell is excluded from the candidate set. The mine count (10) and every other rule are unchanged from the proposal — this only changes *when* the mines are generated, not how many or how they behave.
+- **First-click safety with an opening flood:** the first reveal of every game is guaranteed to not be a mine, and is also guaranteed to open a non-trivial empty area. The 10 mines are generated lazily after the first click rather than at game start, and both the clicked cell *and its 8 surrounding cells* are excluded from the candidate set, so the clicked cell has zero adjacent mines and the recursive reveal kicks in. The mine count (10) and every other rule are unchanged from the proposal — this only changes *when* and *where* the mines are generated, not how many or how they behave.
 - **Flag protects against accidental reveal:** left-clicking a cell that the player has already flagged does nothing, instead of revealing it. The player must explicitly unflag before revealing. This is a standard quality-of-life rule in Minesweeper variants and does not change any original requirement — it only restricts the cases in which a reveal can occur.
+- **Flag count capped at 10:** the player cannot place more flags than there are mines. This is a standard sanity guard that the proposal did not explicitly mention.
 - **Photosensitivity-safe EARTHQUAKE animation:** an earlier iteration of the animation flashed a yellow overlay and a red "EARTHQUAKE!" banner during the shake. Both were removed so the animation is just the shake. This is an accessibility-driven simplification — the underlying gameplay event (clear flags, shift mines, recompute numbers) is unchanged.
 
 ## Project Structure
