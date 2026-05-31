@@ -55,9 +55,19 @@ The .NET 10 SDK is a free program from Microsoft that lets your computer compile
 <details>
 <summary><b>Step 2 — Get the project files</b></summary>
 
-You have two ways to download the code. Either is fine.
+You have two ways to download the code.
 
-**Easiest (no Git needed):**
+**Recommended — Git clone (especially on macOS):**
+
+```
+git clone https://github.com/rOsOr9981/cs20200-shifting-minesweeper.git
+```
+
+This creates a folder called `cs20200-shifting-minesweeper` in whatever directory your terminal is currently in. On macOS this is also the easiest path because files cloned via Git do **not** carry the "downloaded from internet" quarantine attribute, so the launcher script will run on a simple double-click without any Gatekeeper prompt.
+
+If Git is not installed on macOS, opening a terminal and running `git --version` once will offer to install the Xcode Command Line Tools (small one-time setup, ~hundreds of MB).
+
+**Alternative — Download ZIP (no Git required):**
 
 1. Open this page in your browser:
    <https://github.com/rOsOr9981/cs20200-shifting-minesweeper>
@@ -65,13 +75,7 @@ You have two ways to download the code. Either is fine.
 3. Click **Download ZIP**.
 4. Find the downloaded `cs20200-shifting-minesweeper-main.zip` file (usually in your **Downloads** folder) and double-click it to unzip. You will end up with a folder named `cs20200-shifting-minesweeper-main`.
 
-**With Git (if you already have Git installed):**
-
-```
-git clone https://github.com/rOsOr9981/cs20200-shifting-minesweeper.git
-```
-
-This creates a folder called `cs20200-shifting-minesweeper` in whatever directory your terminal is currently in.
+On macOS, files downloaded this way carry a quarantine attribute and the first launch will trigger a Gatekeeper warning. See the macOS instructions in Step 3 below for the easy workaround, or just use `git clone` instead.
 
 </details>
 
@@ -88,9 +92,15 @@ This creates a folder called `cs20200-shifting-minesweeper` in whatever director
 
 **On macOS**
 
-1. Open the project folder in **Finder** (the unzipped or cloned folder from Step 2).
+1. Open the project folder in **Finder** (the cloned or unzipped folder from Step 2).
 2. Double-click **`run.command`**.
-   - The first time, macOS may show a warning like *"run.command can't be opened because it is from an unidentified developer"*. If that happens, **right-click** (or Control-click) `run.command`, choose **Open**, then click **Open** in the dialog. After this one-time approval, double-clicking works normally.
+   - If you used `git clone` in Step 2, this just works.
+   - If you used the ZIP download, macOS Gatekeeper will block the file with a warning like *"Apple cannot verify that 'run.command' is free of malicious code"*. The dialog typically only offers **"Move to Trash"** or **"Done"** — neither of which runs the script. To unblock:
+     - Click **Done** to dismiss the warning.
+     - Open **System Settings → Privacy & Security**.
+     - Scroll to the **Security** section. You will see a line like *"'run.command' was blocked"*.
+     - Click **Open Anyway** and confirm.
+   - After this one-time approval, future double-clicks work normally.
 3. A Terminal window opens and shows "Restoring packages…" and similar messages. On the **first run only** this takes 1–2 minutes while Avalonia downloads. On every later run it is almost instant.
 4. A game window titled **"Shifting Minesweeper"** appears. Have fun!
 5. When you close the game, the Terminal window will say `[Process completed]`. You can close it manually — it does not close itself.
@@ -120,6 +130,10 @@ This does exactly the same thing the run scripts do.
 
 - **"dotnet: command not found" or "'dotnet' is not recognized"** — The .NET 10 SDK is not installed yet, or your terminal was already open when you installed it. Close and reopen the terminal and try again. If it still fails, repeat Step 1.
 - **"permission denied: ./run.command" or `./run.sh` on macOS/Linux** — Should not happen with a fresh clone (the executable bit is committed in Git), but if you downloaded the ZIP via some tool that strips permissions, run `chmod +x run.command run.sh` once in Terminal.
+- **macOS: "Apple cannot verify that 'run.command' is free of malicious code"** — This is Gatekeeper protecting you from unsigned scripts downloaded from the internet. Three ways to bypass, in order of convenience:
+  1. *(Recommended)* Re-obtain the project with `git clone` instead of the ZIP download. Cloned files do not carry the quarantine attribute and Gatekeeper will not interfere.
+  2. Open **System Settings → Privacy & Security**, scroll to the **Security** section, find the message about `run.command`, and click **Open Anyway**.
+  3. In Terminal, run `xattr -dr com.apple.quarantine .` inside the project folder. This removes the quarantine attribute from every file in the folder, after which double-click works normally.
 - **The first run is very slow** — That is normal. NuGet is downloading Avalonia (~80 MB). It only happens once.
 - **A white/blank window appears with no grid** — Close it and run again; this is usually a one-off rendering hiccup on the very first launch after install.
 - **You see Korean text "복원할 프로젝트를 확인하는 중…"** in the terminal — That is just .NET printing its progress in Korean because of your system locale. It is normal output, not an error.
